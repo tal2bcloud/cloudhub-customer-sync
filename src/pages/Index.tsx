@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import CustomerTable from '@/components/CustomerTable';
 import CustomerDetail from '@/components/CustomerDetail';
 import SystemSelector from '@/components/SystemSelector';
+import SystemCredentials from '@/components/SystemCredentials';
 import { Customer, CustomerIdentifier, SystemMapping, SystemType } from '@/utils/types';
 import { getAllCustomers, getCustomerById, getCustomersBySystem, updateCustomer } from '@/utils/mockData';
 
@@ -20,23 +20,23 @@ const Index = () => {
     sourceIdentifier: 'email',
     targetIdentifier: 'email',
   });
+  const [systemCredentials, setSystemCredentials] = useState<{
+    cloudhealth?: string;
+    hubspot?: string;
+  }>({});
 
-  // Get customers based on selected system
   const customers = selectedSystem === 'all' 
     ? getAllCustomers() 
     : getCustomersBySystem(selectedSystem);
 
-  // Get selected customer details
   const selectedCustomer = selectedCustomerId 
     ? getCustomerById(selectedCustomerId)
     : undefined;
 
-  // Handle customer selection
   const handleCustomerSelect = (customerId: string) => {
     setSelectedCustomerId(customerId);
   };
 
-  // Handle customer update
   const handleUpdateCustomer = (updates: Partial<Customer>) => {
     if (!selectedCustomerId) return;
     
@@ -52,17 +52,21 @@ const Index = () => {
     }
   };
 
-  // Handle system mapping change
   const handleSystemMappingChange = (updates: Partial<SystemMapping>) => {
     setSystemMapping(prev => ({ ...prev, ...updates }));
     
-    // If source system changed, update selected system filter
     if (updates.sourceSystem) {
       setSelectedSystem(updates.sourceSystem);
     }
   };
 
-  // Render different content based on active tab
+  const handleCredentialsSave = (system: 'cloudhealth' | 'hubspot', credentials: string) => {
+    setSystemCredentials(prev => ({
+      ...prev,
+      [system]: credentials
+    }));
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'customers':
@@ -88,6 +92,17 @@ const Index = () => {
               onMappingChange={handleSystemMappingChange}
             />
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SystemCredentials 
+                system="cloudhealth" 
+                onCredentialsSave={(cred) => handleCredentialsSave('cloudhealth', cred)}
+              />
+              <SystemCredentials 
+                system="hubspot" 
+                onCredentialsSave={(cred) => handleCredentialsSave('hubspot', cred)}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <CustomerTable 
                 customers={getCustomersBySystem(systemMapping.sourceSystem)}
