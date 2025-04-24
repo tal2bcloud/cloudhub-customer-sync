@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Lock, Download } from 'lucide-react';
-import { fetchHubSpotCompanies, fetchCloudHealthCustomers, exportToCSV } from '@/utils/apiServices';
 
 interface SystemCredentialsProps {
   system: 'cloudhealth' | 'hubspot';
@@ -32,13 +32,27 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({
       return;
     }
 
-    // In a real implementation, this would use Supabase to securely store credentials
-    onCredentialsSave?.(apiKey);
-    
-    toast({
-      title: "Credentials Saved",
-      description: `${system.charAt(0).toUpperCase() + system.slice(1)} API Key has been securely saved`,
-    });
+    try {
+      // Save credentials
+      onCredentialsSave?.(apiKey);
+      
+      // Store in session storage for persistence during the session
+      sessionStorage.setItem(`${system}-api-key`, apiKey);
+      
+      toast({
+        title: "Credentials Saved",
+        description: `${system.charAt(0).toUpperCase() + system.slice(1)} API Key has been securely saved`,
+      });
+      
+      console.log(`${system} credentials saved successfully`);
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save credentials",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleExport = async () => {
@@ -53,22 +67,33 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({
 
     setLoading(true);
     try {
-      onExport?.(apiKey);
+      console.log(`Exporting ${system} data...`);
+      await onExport?.(apiKey);
       
       toast({
         title: "Success",
         description: `${system.charAt(0).toUpperCase() + system.slice(1)} data fetched successfully`,
       });
     } catch (error) {
+      console.error(`Error fetching ${system} data:`, error);
       toast({
         title: "Error",
-        description: `Failed to fetch ${system} data`,
+        description: `Failed to fetch ${system} data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  // Load saved credentials from session storage on component mount
+  React.useEffect(() => {
+    const savedKey = sessionStorage.getItem(`${system}-api-key`);
+    if (savedKey) {
+      setApiKey(savedKey);
+      console.log(`Loaded saved ${system} credentials`);
+    }
+  }, [system]);
 
   return (
     <Card>

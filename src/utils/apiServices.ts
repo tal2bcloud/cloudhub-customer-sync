@@ -1,8 +1,11 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { HubSpotCompany, CloudHealthCustomer } from "@/utils/types";
 
 export const fetchHubSpotCompanies = async (apiKey: string) => {
   try {
+    console.log("Fetching HubSpot companies with API key:", apiKey ? "API key provided" : "No API key");
+    
     const response = await fetch('https://api.hubapi.com/crm/v3/objects/companies/search', {
       method: 'POST',
       headers: {
@@ -49,15 +52,19 @@ export const fetchHubSpotCompanies = async (apiKey: string) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch HubSpot companies');
+      const errorData = await response.text();
+      console.error('HubSpot API error:', response.status, errorData);
+      throw new Error(`Failed to fetch HubSpot companies: ${response.status} ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('HubSpot data retrieved:', data.results ? `${data.results.length} companies` : 'No results');
     return data.results;
   } catch (error) {
+    console.error('Error in fetchHubSpotCompanies:', error);
     toast({
       title: "Error",
-      description: "Failed to fetch HubSpot companies",
+      description: `Failed to fetch HubSpot companies: ${error instanceof Error ? error.message : 'Unknown error'}`,
       variant: "destructive"
     });
     return [];
@@ -66,6 +73,8 @@ export const fetchHubSpotCompanies = async (apiKey: string) => {
 
 export const fetchCloudHealthCustomers = async (apiKey: string) => {
   try {
+    console.log("Fetching CloudHealth customers with API key:", apiKey ? "API key provided" : "No API key");
+    
     const response = await fetch('https://chapi.cloudhealthtech.com/v1/customers?per_page=1000', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -74,15 +83,19 @@ export const fetchCloudHealthCustomers = async (apiKey: string) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch CloudHealth customers');
+      const errorData = await response.text();
+      console.error('CloudHealth API error:', response.status, errorData);
+      throw new Error(`Failed to fetch CloudHealth customers: ${response.status} ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('CloudHealth data retrieved:', data.customers ? `${data.customers.length} customers` : 'No customers');
     return data.customers;
   } catch (error) {
+    console.error('Error in fetchCloudHealthCustomers:', error);
     toast({
       title: "Error",
-      description: "Failed to fetch CloudHealth customers",
+      description: `Failed to fetch CloudHealth customers: ${error instanceof Error ? error.message : 'Unknown error'}`,
       variant: "destructive"
     });
     return [];

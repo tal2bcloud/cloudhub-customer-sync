@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
@@ -35,6 +35,20 @@ const Index = () => {
   }>({});
   const [hubspotCompanies, setHubspotCompanies] = useState<HubSpotCompany[]>([]);
   const [cloudHealthCustomers, setCloudHealthCustomers] = useState<CloudHealthCustomer[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const cloudHealthKey = sessionStorage.getItem('cloudhealth-api-key');
+    const hubspotKey = sessionStorage.getItem('hubspot-api-key');
+    
+    if (cloudHealthKey || hubspotKey) {
+      setSystemCredentials({
+        cloudhealth: cloudHealthKey || undefined,
+        hubspot: hubspotKey || undefined
+      });
+      console.log("Loaded saved credentials from session storage");
+    }
+  }, []);
 
   const customers = selectedSystem === 'all' 
     ? getAllCustomers() 
@@ -72,6 +86,7 @@ const Index = () => {
   };
 
   const handleCredentialsSave = (system: 'cloudhealth' | 'hubspot', credentials: string) => {
+    console.log(`Saving ${system} credentials`);
     setSystemCredentials(prev => ({
       ...prev,
       [system]: credentials
@@ -79,21 +94,28 @@ const Index = () => {
   };
 
   const handleExportData = async (system: 'cloudhealth' | 'hubspot', apiKey: string) => {
+    setIsLoading(true);
+    console.log(`Starting export for ${system}`);
+    
     try {
-      let data;
       if (system === 'hubspot') {
-        data = await fetchHubSpotCompanies(apiKey);
-        setHubspotCompanies(data);
+        const data = await fetchHubSpotCompanies(apiKey);
+        console.log(`Fetched ${data?.length || 0} HubSpot companies`);
+        setHubspotCompanies(data || []);
       } else {
-        data = await fetchCloudHealthCustomers(apiKey);
-        setCloudHealthCustomers(data);
+        const data = await fetchCloudHealthCustomers(apiKey);
+        console.log(`Fetched ${data?.length || 0} CloudHealth customers`);
+        setCloudHealthCustomers(data || []);
       }
     } catch (error) {
+      console.error(`Error in handleExportData for ${system}:`, error);
       toast({
         title: "Error",
-        description: `Failed to fetch ${system} data`,
+        description: `Failed to fetch ${system} data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -170,7 +192,7 @@ const Index = () => {
             <div className="flex items-center">
               <SidebarTrigger />
               <h1 className="text-lg font-medium ml-4">
-                CloudHub Customer Sync
+                CloudHub Customer Sync {isLoading && '(Loading...)'}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
