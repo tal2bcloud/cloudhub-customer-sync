@@ -1,23 +1,5 @@
-
 import { toast } from "@/components/ui/use-toast";
-
-interface HubSpotCompany {
-  id: string;
-  properties: {
-    name: string;
-    azure_model: string;
-    lifecyclestage: string;
-    company_owner: string;
-    management_account: string;
-    [key: string]: string;
-  };
-}
-
-interface CloudHealthCustomer {
-  id: string;
-  name: string;
-  [key: string]: any;
-}
+import { HubSpotCompany, CloudHealthCustomer } from "@/utils/types";
 
 export const fetchHubSpotCompanies = async (apiKey: string) => {
   try {

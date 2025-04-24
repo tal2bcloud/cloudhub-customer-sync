@@ -7,8 +7,16 @@ import CustomerDetail from '@/components/CustomerDetail';
 import SystemSelector from '@/components/SystemSelector';
 import SystemCredentials from '@/components/SystemCredentials';
 import SystemComparison from '@/components/SystemComparison';
-import { Customer, CustomerIdentifier, SystemMapping, SystemType } from '@/utils/types';
+import { 
+  Customer, 
+  CustomerIdentifier, 
+  SystemMapping, 
+  SystemType, 
+  HubSpotCompany, 
+  CloudHealthCustomer 
+} from '@/utils/types';
 import { getAllCustomers, getCustomerById, getCustomersBySystem, updateCustomer } from '@/utils/mockData';
+import { fetchHubSpotCompanies, fetchCloudHealthCustomers } from '@/utils/apiServices';
 
 const Index = () => {
   const { toast } = useToast();
