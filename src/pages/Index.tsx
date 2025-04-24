@@ -6,6 +6,7 @@ import CustomerTable from '@/components/CustomerTable';
 import CustomerDetail from '@/components/CustomerDetail';
 import SystemSelector from '@/components/SystemSelector';
 import SystemCredentials from '@/components/SystemCredentials';
+import SystemComparison from '@/components/SystemComparison';
 import { Customer, CustomerIdentifier, SystemMapping, SystemType } from '@/utils/types';
 import { getAllCustomers, getCustomerById, getCustomersBySystem, updateCustomer } from '@/utils/mockData';
 
@@ -24,6 +25,8 @@ const Index = () => {
     cloudhealth?: string;
     hubspot?: string;
   }>({});
+  const [hubspotCompanies, setHubspotCompanies] = useState<HubSpotCompany[]>([]);
+  const [cloudHealthCustomers, setCloudHealthCustomers] = useState<CloudHealthCustomer[]>([]);
 
   const customers = selectedSystem === 'all' 
     ? getAllCustomers() 
@@ -67,6 +70,25 @@ const Index = () => {
     }));
   };
 
+  const handleExportData = async (system: 'cloudhealth' | 'hubspot', apiKey: string) => {
+    try {
+      let data;
+      if (system === 'hubspot') {
+        data = await fetchHubSpotCompanies(apiKey);
+        setHubspotCompanies(data);
+      } else {
+        data = await fetchCloudHealthCustomers(apiKey);
+        setCloudHealthCustomers(data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to fetch ${system} data`,
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'customers':
@@ -96,27 +118,21 @@ const Index = () => {
               <SystemCredentials 
                 system="cloudhealth" 
                 onCredentialsSave={(cred) => handleCredentialsSave('cloudhealth', cred)}
+                onExport={(cred) => handleExportData('cloudhealth', cred)}
               />
               <SystemCredentials 
                 system="hubspot" 
                 onCredentialsSave={(cred) => handleCredentialsSave('hubspot', cred)}
+                onExport={(cred) => handleExportData('hubspot', cred)}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CustomerTable 
-                customers={getCustomersBySystem(systemMapping.sourceSystem)}
-                onCustomerSelect={handleCustomerSelect}
-                selectedCustomerId={selectedCustomerId}
-                title={`${systemMapping.sourceSystem === 'cloudhealth' ? 'CloudHealth' : 'HubSpot'} Customers (Source)`}
+            {(hubspotCompanies.length > 0 || cloudHealthCustomers.length > 0) && (
+              <SystemComparison
+                hubspotData={hubspotCompanies}
+                cloudHealthData={cloudHealthCustomers}
               />
-              <CustomerTable 
-                customers={getCustomersBySystem(systemMapping.targetSystem)}
-                onCustomerSelect={handleCustomerSelect}
-                selectedCustomerId={selectedCustomerId}
-                title={`${systemMapping.targetSystem === 'cloudhealth' ? 'CloudHealth' : 'HubSpot'} Customers (Target)`}
-              />
-            </div>
+            )}
           </div>
         );
       case 'data':

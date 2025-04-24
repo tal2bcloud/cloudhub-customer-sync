@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +10,14 @@ import { fetchHubSpotCompanies, fetchCloudHealthCustomers, exportToCSV } from '@
 interface SystemCredentialsProps {
   system: 'cloudhealth' | 'hubspot';
   onCredentialsSave?: (credentials: string) => void;
+  onExport?: (credentials: string) => void;
 }
 
-const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredentialsSave }) => {
+const SystemCredentials: React.FC<SystemCredentialsProps> = ({ 
+  system, 
+  onCredentialsSave,
+  onExport
+}) => {
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -49,23 +53,16 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredent
 
     setLoading(true);
     try {
-      let data;
-      if (system === 'hubspot') {
-        data = await fetchHubSpotCompanies(apiKey);
-        exportToCSV(data, 'hubspot_companies');
-      } else {
-        data = await fetchCloudHealthCustomers(apiKey);
-        exportToCSV(data, 'cloudhealth_customers');
-      }
+      onExport?.(apiKey);
       
       toast({
         title: "Success",
-        description: `${system.charAt(0).toUpperCase() + system.slice(1)} data exported successfully`,
+        description: `${system.charAt(0).toUpperCase() + system.slice(1)} data fetched successfully`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to export ${system} data`,
+        description: `Failed to fetch ${system} data`,
         variant: "destructive"
       });
     } finally {
@@ -105,7 +102,7 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredent
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
-              Export Data
+              {loading ? 'Loading...' : 'Fetch Data'}
             </Button>
           </div>
         </div>

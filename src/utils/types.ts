@@ -1,4 +1,3 @@
-
 export type SystemType = 'cloudhealth' | 'hubspot';
 
 export type CustomerIdentifier = 'id' | 'email' | 'name' | 'customId';
@@ -34,4 +33,31 @@ export interface CustomerUpdate {
   customerId: string;
   system: SystemType;
   fields: Record<string, any>;
+}
+
+export interface HubSpotCompany {
+  id: string;
+  properties: {
+    name: string;
+    azure_model: string;
+    lifecyclestage: string;
+    company_owner: string;
+    management_account: string;
+    [key: string]: string;
+  };
+}
+
+export interface CloudHealthCustomer {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
+export interface ComparisonTableRow {
+  hubspotId?: string;
+  hubspotName?: string;
+  cloudHealthId?: string;
+  cloudHealthName?: string;
+  matchStatus: 'matched' | 'hubspot_only' | 'cloudhealth_only';
+  similarity?: number;
 }
