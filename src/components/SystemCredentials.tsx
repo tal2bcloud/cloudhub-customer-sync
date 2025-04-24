@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Lock } from 'lucide-react';
+import { Lock, Download } from 'lucide-react';
+import { fetchHubSpotCompanies, fetchCloudHealthCustomers, exportToCSV } from '@/utils/apiServices';
 
 interface SystemCredentialsProps {
   system: 'cloudhealth' | 'hubspot';
@@ -14,6 +15,7 @@ interface SystemCredentialsProps {
 
 const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredentialsSave }) => {
   const [apiKey, setApiKey] = useState('');
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -33,6 +35,42 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredent
       title: "Credentials Saved",
       description: `${system.charAt(0).toUpperCase() + system.slice(1)} API Key has been securely saved`,
     });
+  };
+
+  const handleExport = async () => {
+    if (!apiKey.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter API credentials first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let data;
+      if (system === 'hubspot') {
+        data = await fetchHubSpotCompanies(apiKey);
+        exportToCSV(data, 'hubspot_companies');
+      } else {
+        data = await fetchCloudHealthCustomers(apiKey);
+        exportToCSV(data, 'cloudhealth_customers');
+      }
+      
+      toast({
+        title: "Success",
+        description: `${system.charAt(0).toUpperCase() + system.slice(1)} data exported successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to export ${system} data`,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,9 +94,20 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredent
               className="mt-2"
             />
           </div>
-          <Button onClick={handleSave} className="w-full">
-            Save Credentials
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSave} className="flex-1">
+              Save Credentials
+            </Button>
+            <Button 
+              onClick={handleExport}
+              disabled={loading}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Data
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -66,4 +115,3 @@ const SystemCredentials: React.FC<SystemCredentialsProps> = ({ system, onCredent
 };
 
 export default SystemCredentials;
-
